@@ -28,25 +28,20 @@ int  siphash( uint8_t *out, const uint8_t *in, uint64_t inlen, const uint8_t *k 
   const uint8_t *end = in + inlen - ( inlen % sizeof( uint64_t ) );
   int left = inlen & 7;
   b = ( ( uint64_t )inlen ) << 56;
-  v3 ^= k1;
-  v2 ^= k0;
-  v1 ^= k1;
-  v0 ^= k0;
-
+  v3 ^= k1; v2 ^= k0; v1 ^= k1; v0 ^= k0;
   for (; in != end; in += 8) {
     m = 0;
     for (i = 0; i < 8; i++)
       m |= ((uint64_t)in[i]) << (8*i);
     v3 ^= m;
-    for(i=0; i<cROUNDS; i++) SIPROUND;
+    for (i = 0; i < cROUNDS; i++) SIPROUND;
     v0 ^= m;
   }
   for (; left; left--)
     b |= ((uint64_t)in[left-1]) << (8*left-8);
   v3 ^= b;
   for(i=0; i<cROUNDS; i++) SIPROUND;
-  v0 ^= b;
-  v2 ^= 0xff;
+  v0 ^= b; v2 ^= 0xff;
   for(i=0; i<dROUNDS; i++) SIPROUND;
   b = v0 ^ v1 ^ v2  ^ v3;
   for (i = 0; i < 8; i++) {
