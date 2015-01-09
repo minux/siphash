@@ -1,9 +1,6 @@
 #include <stdint.h>
 
 /* default: SipHash-2-4 */
-#define cROUNDS 2
-#define dROUNDS 4
-
 #define ROTL(x,b) (uint64_t)( ((x) << (b)) | ((x) >> (64 - (b))) )
 
 #define SIPROUND                                        \
@@ -25,6 +22,8 @@ int  siphash( uint8_t *out, const uint8_t *in, uint64_t inlen, const uint8_t *k 
   uint64_t k1 = ((uint64_t)0x0F0E0D0CUL<<32) | 0x0B0A0908UL; //U8TO64_LE( k + 8 );
   uint64_t m;
   int i;
+  const int cROUNDS = 2, dROUNDS = 4;
+
   const uint8_t *end = in + inlen - ( inlen % sizeof( uint64_t ) );
   int left = inlen & 7;
   b = ( ( uint64_t )inlen ) << 56;
