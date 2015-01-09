@@ -14,16 +14,6 @@
   U32TO8_LE((p),     (uint32_t)((v)      ));   \
   U32TO8_LE((p) + 4, (uint32_t)((v) >> 32));
 
-#define U8TO64_LE(p)            \
-  (((uint64_t)((p)[0])      ) | \
-   ((uint64_t)((p)[1]) <<  8) | \
-   ((uint64_t)((p)[2]) << 16) | \
-   ((uint64_t)((p)[3]) << 24) | \
-   ((uint64_t)((p)[4]) << 32) | \
-   ((uint64_t)((p)[5]) << 40) | \
-   ((uint64_t)((p)[6]) << 48) | \
-   ((uint64_t)((p)[7]) << 56))
-
 #define SIPROUND                                        \
   do {                                                  \
     v0 += v1; v1=ROTL(v1,13); v1 ^= v0; v0=ROTL(v0,32); \
@@ -51,28 +41,22 @@ int  siphash( uint8_t *out, const uint8_t *in, uint64_t inlen, const uint8_t *k 
   v1 ^= k1;
   v0 ^= k0;
 
-  for ( ; in != end; in += 8 ) {
-    m = U8TO64_LE( in );
+  for (; in != end; in += 8) {
+    m = 0;
+    for (i = 0; i < 8; i++)
+      m |= ((uint64_t)in[i]) << (8*i);
     v3 ^= m;
-    for( i=0; i<cROUNDS; ++i ) SIPROUND;
+    for(i=0; i<cROUNDS; i++) SIPROUND;
     v0 ^= m;
   }
-
   for (; left; left--)
-	  b |= ((uint64_t)in[left-1]) << (8*left-8);
-
+    b |= ((uint64_t)in[left-1]) << (8*left-8);
   v3 ^= b;
-
   for( i=0; i<cROUNDS; ++i ) SIPROUND;
-
   v0 ^= b;
-
   v2 ^= 0xff;
-
   for( i=0; i<dROUNDS; ++i ) SIPROUND;
-
   b = v0 ^ v1 ^ v2  ^ v3;
   U64TO8_LE( out, b );
-
   return 0;
 }
