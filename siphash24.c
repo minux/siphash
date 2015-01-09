@@ -4,7 +4,7 @@
 #define cROUNDS 2
 #define dROUNDS 4
 
-#define ROTL(x,b) (uint64_t)( ((x) << (b)) | ( (x) >> (64 - (b))) )
+#define ROTL(x,b) (uint64_t)( ((x) << (b)) | ((x) >> (64 - (b))) )
 
 #define SIPROUND                                        \
   do {                                                  \
@@ -16,13 +16,13 @@
 
 int  siphash( uint8_t *out, const uint8_t *in, uint64_t inlen, const uint8_t *k ) {
   /* "somepseudorandomlygeneratedbytes" */
-  uint64_t v0 = 0x736f6d6570736575ULL;
-  uint64_t v1 = 0x646f72616e646f6dULL;
-  uint64_t v2 = 0x6c7967656e657261ULL;
-  uint64_t v3 = 0x7465646279746573ULL;
+  uint64_t v0 = ((uint64_t)0x736f6d65UL<<32) | 0x70736575UL;
+  uint64_t v1 = ((uint64_t)0x646f7261UL<<32) | 0x6e646f6dUL;
+  uint64_t v2 = ((uint64_t)0x6c796765UL<<32) | 0x6e657261UL;
+  uint64_t v3 = ((uint64_t)0x74656462UL<<32) | 0x79746573UL;
   uint64_t b;
-  uint64_t k0 = 0x0706050403020100ULL; //U8TO64_LE( k );
-  uint64_t k1 = 0x0F0E0D0C0B0A0908ULL; //U8TO64_LE( k + 8 );
+  uint64_t k0 = ((uint64_t)0x07060504UL<<32) | 0x03020100UL; //U8TO64_LE( k );
+  uint64_t k1 = ((uint64_t)0x0F0E0D0CUL<<32) | 0x0B0A0908UL; //U8TO64_LE( k + 8 );
   uint64_t m;
   int i;
   const uint8_t *end = in + inlen - ( inlen % sizeof( uint64_t ) );
