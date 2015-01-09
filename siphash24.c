@@ -6,14 +6,6 @@
 
 #define ROTL(x,b) (uint64_t)( ((x) << (b)) | ( (x) >> (64 - (b))) )
 
-#define U32TO8_LE(p, v)                                         \
-  (p)[0] = (uint8_t)((v)      ); (p)[1] = (uint8_t)((v) >>  8); \
-  (p)[2] = (uint8_t)((v) >> 16); (p)[3] = (uint8_t)((v) >> 24);
-
-#define U64TO8_LE(p, v)                        \
-  U32TO8_LE((p),     (uint32_t)((v)      ));   \
-  U32TO8_LE((p) + 4, (uint32_t)((v) >> 32));
-
 #define SIPROUND                                        \
   do {                                                  \
     v0 += v1; v1=ROTL(v1,13); v1 ^= v0; v0=ROTL(v0,32); \
@@ -52,11 +44,14 @@ int  siphash( uint8_t *out, const uint8_t *in, uint64_t inlen, const uint8_t *k 
   for (; left; left--)
     b |= ((uint64_t)in[left-1]) << (8*left-8);
   v3 ^= b;
-  for( i=0; i<cROUNDS; ++i ) SIPROUND;
+  for(i=0; i<cROUNDS; i++) SIPROUND;
   v0 ^= b;
   v2 ^= 0xff;
-  for( i=0; i<dROUNDS; ++i ) SIPROUND;
+  for(i=0; i<dROUNDS; i++) SIPROUND;
   b = v0 ^ v1 ^ v2  ^ v3;
-  U64TO8_LE( out, b );
+  for (i = 0; i < 8; i++) {
+    out[i] = (uint8_t)b;
+    b >>= 8;
+  }
   return 0;
 }
