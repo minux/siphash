@@ -21,22 +21,21 @@ int  siphash( uint8_t *out, const uint8_t *in, uint64_t inlen, const uint8_t *k 
   // hard-coded k.
   uint64_t k0 = ((uint64_t)0x07060504UL<<32) | 0x03020100UL; //U8TO64_LE( k );
   uint64_t k1 = ((uint64_t)0x0F0E0D0CUL<<32) | 0x0B0A0908UL; //U8TO64_LE( k + 8 );
-  uint64_t m;
   int i;
   const int cROUNDS = 2, dROUNDS = 4;
 
   const uint8_t *end = in + inlen - ( inlen % sizeof( uint64_t ) );
   int left = inlen & 7;
-  b = ( ( uint64_t )inlen ) << 56;
   v3 ^= k1; v2 ^= k0; v1 ^= k1; v0 ^= k0;
   for (; in != end; in += 8) {
-    m = 0;
+    b = 0;
     for (i = 0; i < 8; i++)
-      m |= ((uint64_t)in[i]) << (8*i);
-    v3 ^= m;
+      b |= ((uint64_t)in[i]) << (8*i);
+    v3 ^= b;
     for (i = 0; i < cROUNDS; i++) SIPROUND;
-    v0 ^= m;
+    v0 ^= b;
   }
+  b = ( ( uint64_t )inlen ) << 56;
   for (; left; left--)
     b |= ((uint64_t)in[left-1]) << (8*left-8);
   v3 ^= b;
