@@ -3,9 +3,9 @@
 typedef struct { /* assume unsigned long is at least 32-bit */
   unsigned long hi;
   unsigned long lo;
-} uint64_t;
+} _uint64;
 
-static inline void rotl(uint64_t *v, int bits) { /* bits must <=32 */
+static inline void rotl(_uint64 *v, int bits) { /* bits must <=32 */
   unsigned long tmp = v->hi;
   if (bits == 32) {
     v->hi = v->lo;
@@ -16,12 +16,12 @@ static inline void rotl(uint64_t *v, int bits) { /* bits must <=32 */
   }
 }
 
-static inline void xor(uint64_t *dst, uint64_t *src) {
+static inline void xor(_uint64 *dst, _uint64 *src) {
   dst->hi ^= src->hi;
   dst->lo ^= src->lo;
 }
 
-static inline void add(uint64_t *dst, uint64_t *src) {
+static inline void add(_uint64 *dst, _uint64 *src) {
   dst->lo += src->lo;
   dst->hi += src->hi + ((dst->lo & 0xfffffffful) < (src->lo&0xfffffffful) ? 1:0);
 }
@@ -36,14 +36,14 @@ static inline void add(uint64_t *dst, uint64_t *src) {
 
 int siphash(unsigned char *out, const unsigned char *in, unsigned long inlen, const unsigned char *k /*unused*/) {
   /* "somepseudorandomlygeneratedbytes" */
-  uint64_t v0 = {0x736f6d65UL, 0x70736575UL};
-  uint64_t v1 = {0x646f7261UL, 0x6e646f6dUL};
-  uint64_t v2 = {0x6c796765UL, 0x6e657261UL};
-  uint64_t v3 = {0x74656462UL, 0x79746573UL};
-  uint64_t b;
+  _uint64 v0 = {0x736f6d65UL, 0x70736575UL};
+  _uint64 v1 = {0x646f7261UL, 0x6e646f6dUL};
+  _uint64 v2 = {0x6c796765UL, 0x6e657261UL};
+  _uint64 v3 = {0x74656462UL, 0x79746573UL};
+  _uint64 b;
   /* hard-coded k. */
-  uint64_t k0 = {0x07060504UL, 0x03020100UL}; /* U8TO64_LE(k); */
-  uint64_t k1 = {0x0F0E0D0CUL, 0x0B0A0908UL}; /* U8TO64_LE(k + 8); */
+  _uint64 k0 = {0x07060504UL, 0x03020100UL}; /* U8TO64_LE(k); */
+  _uint64 k1 = {0x0F0E0D0CUL, 0x0B0A0908UL}; /* U8TO64_LE(k + 8); */
   int i;
   const int cROUNDS = 2, dROUNDS = 4;
   const unsigned char *end = in + inlen - (inlen % 8);
