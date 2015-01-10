@@ -1,15 +1,11 @@
-#include <assert.h>
-
 /* default: SipHash-2-4 */
 
-typedef struct {
-  // assume unsigned long is at least 32-bit
+typedef struct { /* assume unsigned long is at least 32-bit */
   unsigned long hi;
   unsigned long lo;
 } uint64_t;
 
-// bits must <=32
-static inline void rotl(uint64_t *v, int bits) {
+static inline void rotl(uint64_t *v, int bits) { /* bits must <=32 */
   unsigned long tmp = v->hi;
   if (bits == 32) {
     v->hi = v->lo;
@@ -38,27 +34,25 @@ static inline void add(uint64_t *dst, uint64_t *src) {
     add(&v2, &v1); rotl(&v1, 17); xor(&v1, &v2); rotl(&v2, 32); \
   } while(0)
 
-typedef unsigned char uint8_t;
-typedef unsigned long uint; // must match type of uint64_t.lo/hi
-int  siphash( uint8_t *out, const uint8_t *in, uint inlen, const uint8_t *k ) {
+int siphash(unsigned char *out, const unsigned char *in, unsigned long inlen, const unsigned char *k /*unused*/) {
   /* "somepseudorandomlygeneratedbytes" */
   uint64_t v0 = {0x736f6d65UL, 0x70736575UL};
   uint64_t v1 = {0x646f7261UL, 0x6e646f6dUL};
   uint64_t v2 = {0x6c796765UL, 0x6e657261UL};
   uint64_t v3 = {0x74656462UL, 0x79746573UL};
   uint64_t b;
-  // hard-coded k.
-  uint64_t k0 = {0x07060504UL, 0x03020100UL}; //U8TO64_LE( k );
-  uint64_t k1 = {0x0F0E0D0CUL, 0x0B0A0908UL}; //U8TO64_LE( k + 8 );
+  /* hard-coded k. */
+  uint64_t k0 = {0x07060504UL, 0x03020100UL}; /* U8TO64_LE(k); */
+  uint64_t k1 = {0x0F0E0D0CUL, 0x0B0A0908UL}; /* U8TO64_LE(k + 8); */
   int i;
   const int cROUNDS = 2, dROUNDS = 4;
-  const uint8_t *end = in + inlen - (inlen % 8);
+  const unsigned char *end = in + inlen - (inlen % 8);
   int left = inlen & 7;
   xor(&v3, &k1); xor(&v2, &k0); xor(&v1, &k1); xor(&v0, &k0);
   for (; in != end; in += 8) {
     b.hi = 0; b.lo = 0;
-    for (i = 0; i < 4; i++) b.lo |= ((uint)in[i]) << (8*i);
-    for (i = 0; i < 4; i++) b.hi |= ((uint)in[i+4]) << (8*i);
+    for (i = 0; i < 4; i++) b.lo |= ((unsigned long)in[i]) << (8*i);
+    for (i = 0; i < 4; i++) b.hi |= ((unsigned long)in[i+4]) << (8*i);
     xor(&v3, &b);
     for (i = 0; i < cROUNDS; i++) SIPROUND;
     xor(&v0, &b);
@@ -66,9 +60,9 @@ int  siphash( uint8_t *out, const uint8_t *in, uint inlen, const uint8_t *k ) {
   b.hi = (inlen & 0xff)<<24; b.lo = 0;
   for (; left; left--)
     if (left > 4)
-      b.hi |= ((uint)in[left-1]) << (8*left-8-32);
+      b.hi |= ((unsigned long)in[left-1]) << (8*left-8-32);
     else
-      b.lo |= ((uint)in[left-1]) << (8*left-8);
+      b.lo |= ((unsigned long)in[left-1]) << (8*left-8);
   xor(&v3, &b);
   for(i=0; i<cROUNDS; i++) SIPROUND;
   xor(&v0, &b); v2.lo ^= 0xff;
@@ -76,7 +70,7 @@ int  siphash( uint8_t *out, const uint8_t *in, uint inlen, const uint8_t *k ) {
   b.lo = 0; b.hi = 0;
   xor(&b, &v0); xor(&b, &v1); xor(&b, &v2); xor(&b, &v3);
   for (i = 0; i < 8; i++) {
-    uint *t = i > 3 ? &b.hi : &b.lo;
+    unsigned long *t = i > 3 ? &b.hi : &b.lo;
     out[i] = *t;
     *t >>= 8;
   }
