@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <stdio.h>
 
 /* default: SipHash-2-4 */
 #define ROTL(x,b) (unsigned long long)( ((x) << (b)) | ((x) >> (64 - (b))) )
@@ -48,17 +47,11 @@ static inline void init(uint64_t *v) {
 
 #define SIPROUND                                        \
   do {                                                  \
-    /*v0 += v1; v1=ROTL(v1,13); v1 ^= v0; v0=ROTL(v0,32);*/ \
     add(&v0, &v1); rotl(&v1, 13); xor(&v1, &v0); rotl(&v0, 32); \
-    /*v2 += v3; v3=ROTL(v3,16); v3 ^= v2;*/                 \
     add(&v2, &v3); rotl(&v3, 16); xor(&v3, &v2); \
-    /*v0 += v3; v3=ROTL(v3,21); v3 ^= v0;*/                \
     add(&v0, &v3); rotl(&v3, 21); xor(&v3, &v0); \
-    /*v2 += v1; v1=ROTL(v1,17); v1 ^= v2; v2=ROTL(v2,32);*/ \
     add(&v2, &v1); rotl(&v1, 17); xor(&v1, &v2); rotl(&v2, 32); \
   } while(0)
-
-#define TRACE do { printf("%03d: %016llx %016llx %016llx %016llx %016llx\n", __LINE__, v0.val, v1.val, v2.val, v3.val, b.val); } while(0)
 
 typedef unsigned char uint8_t;
 typedef unsigned long uint; // must match type of uint64_t.lo/hi
@@ -78,57 +71,34 @@ int  siphash( uint8_t *out, const uint8_t *in, uint inlen, const uint8_t *k ) {
 
   const uint8_t *end = in + inlen - (inlen % 8);
   int left = inlen & 7;
-  //b = ((uint64_t)inlen) << 56;
   b.hi = (inlen & 0xff)<<24; b.lo = 0; init(&b);
   CHECK(&v0); CHECK(&v1); CHECK(&v2); CHECK(&v3); CHECK(&b);
-  TRACE;
-  //v3 ^= k1; v2 ^= k0; v1 ^= k1; v0 ^= k0;
   xor(&v3, &k1); xor(&v2, &k0); xor(&v1, &k1); xor(&v0, &k0);
-  TRACE;
   for (; in != end; in += 8) {
     m.hi = 0; m.lo = 0;
-    //for (i = 0; i < 8; i++) m |= ((uint64_t)in[i]) << (8*i);
     for (i = 0; i < 4; i++) m.lo |= ((uint)in[i]) << (8 * i);
     for (i = 0; i < 4; i++) m.hi |= ((uint)in[i+4]) << (8 * i); init(&m);
-    //v3 ^= m;
-    TRACE;
     xor(&v3, &m);
-    for (i = 0; i < cROUNDS; i++) { SIPROUND;
-    TRACE; }
-    //v0 ^= m;
+    for (i = 0; i < cROUNDS; i++) SIPROUND;
     xor(&v0, &m);
   }
-  TRACE;
   CHECK(&v0); CHECK(&v1); CHECK(&v2); CHECK(&v3); CHECK(&b);
-  //for (; left; left--) b |= ((uint64_t)in[left-1]) << (8*left-8);
   for (; left; left--)
     if (left > 4)
       b.hi |= ((uint)in[left-1]) << (8*left-8-32);
     else
       b.lo |= ((uint)in[left-1]) << (8*left-8);
   init(&b);
-  TRACE;
-  //v3 ^= b;
   xor(&v3, &b);
-  TRACE;
   for(i=0; i<cROUNDS; i++) SIPROUND;
   CHECK(&v0); CHECK(&v1); CHECK(&v2); CHECK(&v3); CHECK(&b);
-  TRACE;
-  //v0 ^= b; v2 ^= 0xff;
   xor(&v0, &b); v2.lo ^= 0xff; init(&v2);
   CHECK(&v0); CHECK(&v1); CHECK(&v2); CHECK(&v3); CHECK(&b);
   for(i=0; i<dROUNDS; i++) SIPROUND;
   CHECK(&v0); CHECK(&v1); CHECK(&v2); CHECK(&v3); CHECK(&b);
-  TRACE;
-  //b = v0 ^ v1 ^ v2  ^ v3;
   b.lo = 0; b.hi = 0; init(&b);
   xor(&b, &v0); xor(&b, &v1); xor(&b, &v2); xor(&b, &v3);
   CHECK(&v0); CHECK(&v1); CHECK(&v2); CHECK(&v3); CHECK(&b);
-  TRACE;
-  //for (i = 0; i < 8; i++) {
-  //  out[i] = (uint8_t)b;
-  //  b >>= 8;
-  //}
   for (i = 0; i < 8; i++) {
     uint *t = i > 3 ? &b.hi : &b.lo;
     out[i] = *t;
