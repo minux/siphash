@@ -18,6 +18,7 @@ int  siphash( uint8_t *out, const uint8_t *in, uint64_t inlen, const uint8_t *k 
   uint64_t v2 = ((uint64_t)0x6c796765UL<<32) | 0x6e657261UL;
   uint64_t v3 = ((uint64_t)0x74656462UL<<32) | 0x79746573UL;
   uint64_t b;
+  // hard-coded k.
   uint64_t k0 = ((uint64_t)0x07060504UL<<32) | 0x03020100UL; //U8TO64_LE( k );
   uint64_t k1 = ((uint64_t)0x0F0E0D0CUL<<32) | 0x0B0A0908UL; //U8TO64_LE( k + 8 );
   uint64_t m;
